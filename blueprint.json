@@ -15,12 +15,32 @@
         "level": "alpha",
         "patch": 0
       }
-    }
+    },
+    "timestamp": "2019-08-25T15:32:50+10:00"
   },
   "software": {
     "base": {
-      "deployment_type": "web",
+      "name": "sredis",
+      "inherit": "https://raw.githubusercontent.com/EnginesBlueprints/redis/master/blueprint.json",
+      "framework": "base_c",
+      "deployment_type": "worker",
       "http_protocol": "https_and_http"
-    }
+    },
+    "scripts": {
+      "start": {
+        "content": "#!/bin/sh\r\nPID_FILE=/home/engines/run/redis.pid\r\nexport PID_FILE\r\n. /home/engines/functions/trap.sh\r\ncd /home/app/\r\n\r\nredis-server /home/app/redis.conf &\r\n\r\nspiped -d -t '[127.0.0.1]:6379' -s '[0.0.0.0]:8025' -k /home/.secrets/$CONTAINER_NAME\r\n\r\n\r\necho $! > /tmp/$PID_FILE\r\n \r\nstartup_complete\r\nwait\r\nshutdown_complete"
+      }
+    },
+    "system_packages": [
+      {
+        "package": "spiped"
+      }
+    ],
+    "template_files": [
+      {
+        "path": "/home/app/redis.conf",
+        "content": "# Redis configuration file example.\r\n#\r\n# Note that in order to read the configuration file, Redis must be\r\n# started with the file path as first argument:\r\n#\r\n# ./redis-server /path/to/redis.conf\r\n\r\n# Note on units: when memory size is needed, it is possible to specify\r\n# it in the usual form of 1k 5GB 4M and so forth:\r\n#\r\n# 1k => 1000 bytes\r\n# 1kb => 1024 bytes\r\n# 1m => 1000000 bytes\r\n# 1mb => 1024*1024 bytes\r\n# 1g => 1000000000 bytes\r\n# 1gb => 1024*1024*1024 bytes\r\n#\r\n# units are case insensitive so 1GB 1Gb 1gB are all the same.\r\n\r\n\r\n################################## INCLUDES ###################################\r\n\r\n# Include one or more other config files here.  This is useful if you\r\n# have a standard template that goes to all Redis servers but also need\r\n# to customize a few per-server settings.  Include files can include\r\n# other files, so use this wisely.\r\n#\r\n# Notice option \"include\" won't be rewritten by command \"CONFIG REWRITE\"\r\n# from admin or Redis Sentinel. Since Redis always uses the last processed\r\n# line as value of a configuration directive, you'd better put includes\r\n# at the beginning of this file to avoid overwriting config change at runtime.\r\n#\r\n# If instead you are interested in using includes to override configuration\r\n# options, it is better to use include as the last line.\r\n#\r\n# include /path/to/local.conf\r\n# include /path/to/other.conf\r\n\r\n################################## MODULES #####################################\r\n\r\n# Load modules at startup. If the server is not able to load modules\r\n# it will abort. It is possible to use multiple loadmodule directives.\r\n#\r\n# loadmodule /path/to/my_module.so\r\n# loadmodule /path/to/other_module.so\r\n\r\n################################## NETWORK #####################################\r\nbind 127.0.0.1\r\nport 6379\r\nprotected-mode yes\r\ntcp-backlog 511\r\n #\r\n# unixsocket /tmp/redis.sock\r\n# unixsocketperm 700\r\n\r\ntcp-keepalive 300\r\ndaemonize no\r\nsupervised no\r\npidfile /var/run/redis_6379.pid\r\nloglevel notice\r\n syslog-enabled yes\r\n syslog-ident redis\r\ndatabases 16\r\n\r\nalways-show-logo yes\r\nsave 900 1\r\nsave 300 10\r\nsave 60 10000\r\n\r\nstop-writes-on-bgsave-error yes\r\n\r\nrdbcompression yes\r\n# RDB files created with checksum disabled have a checksum of zero that will\r\n# tell the loading code to skip the check.\r\nrdbchecksum yes\r\n\r\n# The filename where to dump the DB\r\ndbfilename dump.rdb\r\n\r\ndir /home/fs/redis_store\r\nreplica-serve-stale-data yes\r\nrepl-diskless-sync no\r\nrepl-diskless-sync-delay 5\r\n\r\nrepl-disable-tcp-nodelay no\r\n\r\n \r\nreplica-priority 100\r\n\r\nlazyfree-lazy-eviction no\r\nlazyfree-lazy-expire no\r\nlazyfree-lazy-server-del no\r\nreplica-lazy-flush no\r\n\r\nappendonly no\r\n\r\n# The name of the append only file (default: \"appendonly.aof\")\r\n\r\nappendfilename \"appendonly.aof\"\r\n\r\n\r\nappendfsync everysec\r\nno-appendfsync-on-rewrite no\r\n\r\nauto-aof-rewrite-percentage 100\r\nauto-aof-rewrite-min-size 64mb\r\n\r\naof-load-truncated yes\r\naof-use-rdb-preamble yes\r\n\r\nlua-time-limit 5000\r\n\r\nslowlog-log-slower-than 10000\r\n\r\n slowlog-max-len 128\r\n\r\n\r\n\r\nlatency-monitor-threshold 0\r\n\r\n\r\nnotify-keyspace-events \"\"\r\n\r\n\r\nhash-max-ziplist-entries 512\r\nhash-max-ziplist-value 64\r\n\r\n\r\nlist-max-ziplist-size -2\r\n\r\nlist-compress-depth 0\r\n\r\nset-max-intset-entries 512\r\n\r\n# Similarly to hashes and lists, sorted sets are also specially encoded in\r\n# order to save a lot of space. This encoding is only used when the length and\r\n# elements of a sorted set are below the following limits:\r\nzset-max-ziplist-entries 128\r\nzset-max-ziplist-value 64\r\nhll-sparse-max-bytes 3000\r\n\r\nstream-node-max-bytes 4096\r\nstream-node-max-entries 100\r\n\r\nactiverehashing yes\r\n\r\nclient-output-buffer-limit normal 0 0 0\r\nclient-output-buffer-limit replica 256mb 64mb 60\r\nclient-output-buffer-limit pubsub 32mb 8mb 60\r\n\r\nhz 10\r\n\r\ndynamic-hz yes\r\naof-rewrite-incremental-fsync yes\r\nrdb-save-incremental-fsync yes\r\n"
+      }
+    ]
   }
 }
