@@ -16,7 +16,7 @@
         "patch": 0
       }
     },
-    "timestamp": "2019-08-25T15:32:50+10:00"
+    "timestamp": "2019-08-26T07:44:27+10:00"
   },
   "software": {
     "base": {
@@ -28,7 +28,7 @@
     },
     "scripts": {
       "start": {
-        "content": "#!/bin/sh\r\nPID_FILE=/home/engines/run/redis.pid\r\nexport PID_FILE\r\n. /home/engines/functions/trap.sh\r\ncd /home/app/\r\n\r\nredis-server /home/app/redis.conf &\r\n\r\nspiped -d -t '[127.0.0.1]:6379' -s '[0.0.0.0]:8025' -k /home/.secrets/$CONTAINER_NAME\r\n\r\n\r\necho $! > /tmp/$PID_FILE\r\n \r\nstartup_complete\r\nwait\r\nshutdown_complete"
+        "content": "#!/bin/sh\r\nPID_FILE=/home/engines/run/redis.pid\r\nexport PID_FILE\r\n. /home/engines/functions/trap.sh\r\ncd /home/app/\r\n\r\nredis-server /home/app/redis.conf &\r\necho $! > /tmp/$PID_FILE\r\nspiped -d -t '[127.0.0.1]:6379' -s '[0.0.0.0]:8025' -k /home/.secrets/$CONTAINER_NAME -p /home/engines/run/spiped.pid\r\necho \" $! \" >> /tmp/$PID_FILE\r\n\r\n\r\n\r\n \r\nstartup_complete\r\nwait\r\nshutdown_complete"
       }
     },
     "system_packages": [
